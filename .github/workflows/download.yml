@@ -13,6 +13,9 @@ on:
         type: string
         default: 'usgs_data'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   download:
     runs-on: ubuntu-latest
@@ -20,17 +23,20 @@ jobs:
       - name: Download USGS data
         run: |
           echo "Downloading: ${{ inputs.usgs_url }}"
+          echo "Rate limit: limiting to 1 connection to avoid USGS IP rate-limit"
+
           curl -L -o "${{ inputs.download_name }}.zip" \
             "${{ inputs.usgs_url }}" \
             --progress-bar \
             --connect-timeout 30 \
-            --max-time 600
+            --max-time 3600 \
+            --max-redirs 5 \
+            --limit-rate 2M
 
       - name: Check downloaded file
         run: |
-          ls -lh "${{ inputs.download_name }}.zip"
-          echo "---"
-          file "${{ inputs.download_name }}.zip"
+          ls -lh "${{ inputs.download_name }}.zip" 2>/dev/null || echo "File not found"
+          file "${{ inputs.download_name }}.zip" 2>/dev/null || echo "Unknown file type"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

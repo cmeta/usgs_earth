@@ -12,6 +12,7 @@ on:
         default: 'false'
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
   # Configure your download URLs here
   URLS: |
     https://dds.cr.usgs.gov/download-staging/eyJpZCI6OTc3NTc2NTM1LCJjb250YWN0SWQiOjI2MjM2MjEyfQ==
@@ -37,9 +38,11 @@ jobs:
           mkdir -p downloads
 
           # Split by newline and download each URL
+          # Limit rate to avoid USGS IP rate-limit (5 per download limit)
           while IFS= read -r url; do
             [ -z "$url" ] && continue
             echo "Downloading: $url"
+            echo "Rate limit: using --limit-rate to avoid exceeding USGS IP limit"
 
             # Extract filename from URL or generate one
             filename=$(echo "$url" | md5sum | cut -d' ' -f1)
@@ -48,7 +51,9 @@ jobs:
             curl -L -o "downloads/$filename" "$url" \
               --progress-bar \
               --connect-timeout 30 \
-              --max-time 3600
+              --max-time 3600 \
+              --max-redirs 5 \
+              --limit-rate 2M
 
             echo "Downloaded: $filename ($(du -sh downloads/$filename | cut -f1))"
           done <<< "${{ env.URLS }}"
