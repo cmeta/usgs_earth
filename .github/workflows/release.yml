@@ -25,35 +25,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Parse URLs
-        id: parse
+      - name: Install aria2
         run: |
-          echo "urls<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ env.URLS }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "release_tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          sudo apt-get update -qq
+          sudo apt-get install -y aria2
 
       - name: Download files
         run: |
           mkdir -p downloads
 
-          # Split by newline and download each URL
-          # Limit rate to avoid USGS IP rate-limit (5 per download limit)
           while IFS= read -r url; do
             [ -z "$url" ] && continue
             echo "Downloading: $url"
-            echo "Rate limit: using --limit-rate to avoid exceeding USGS IP limit"
 
-            # Extract filename from URL or generate one
             filename=$(echo "$url" | md5sum | cut -d' ' -f1)
             filename="usgs_data_${filename}.zip"
 
-            curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -o "downloads/$filename" "$url" \
-              --progress-bar \
-              --connect-timeout 30 \
-              --max-time 3600 \
-              --max-redirs 5 \
-              --limit-rate 512K
+            aria2c "$url" \
+              --out="downloads/$filename" \
+              --connect-timeout=30 \
+              --timeout=3600 \
+              --max-limit=512K \
+              --max-concurrent-downloads=1 \
+              --split=1 \
+              --disable-split \
+              --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
             echo "Downloaded: $filename ($(du -sh downloads/$filename | cut -f1))"
           done <<< "${{ env.URLS }}"

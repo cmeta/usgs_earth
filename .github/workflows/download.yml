@@ -20,18 +20,25 @@ jobs:
   download:
     runs-on: ubuntu-latest
     steps:
+      - name: Install aria2
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y aria2
+
       - name: Download USGS data
         run: |
           echo "Downloading: ${{ inputs.usgs_url }}"
-          echo "Rate limit: limiting to 1 connection to avoid USGS IP rate-limit"
+          echo "Using aria2 with single connection to avoid rate limit"
 
-          curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -o "${{ inputs.download_name }}.zip" \
-            "${{ inputs.usgs_url }}" \
-            --progress-bar \
-            --connect-timeout 30 \
-            --max-time 3600 \
-            --max-redirs 5 \
-            --limit-rate 512K
+          aria2c "${{ inputs.usgs_url }}" \
+            --out="${{ inputs.download_name }}.zip" \
+            --connect-timeout=30 \
+            --timeout=3600 \
+            --max-limit=512K \
+            --max-concurrent-downloads=1 \
+            --split=1 \
+            --disable-split \
+            --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
       - name: Check downloaded file
         run: |
