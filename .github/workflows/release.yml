@@ -47,11 +47,7 @@ jobs:
               --timeout=600 \
               --connect-timeout=30 \
               --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
-              --retry-wait=10 \
-              --max-tries=5 \
-              --lowest-speed-limit=10K \
-              --log=aria2.log \
-              -l aria2.log
+              -l -
 
             echo "Downloaded: $filename ($(du -sh downloads/$filename | cut -f1))"
           done <<< "${{ env.URLS }}"

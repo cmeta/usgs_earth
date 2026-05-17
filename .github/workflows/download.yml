@@ -28,7 +28,7 @@ jobs:
       - name: Download USGS data
         run: |
           echo "Downloading: ${{ inputs.usgs_url }}"
-          echo "Using aria2 with retry logic"
+          echo "Using aria2 with --enable-http-close=false --enable-http-pipelining"
 
           aria2c "${{ inputs.usgs_url }}" \
             --out="${{ inputs.download_name }}.zip" \
@@ -37,17 +37,15 @@ jobs:
             --timeout=600 \
             --connect-timeout=30 \
             --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
-            --retry-wait=10 \
-            --max-tries=5 \
-            --lowest-speed-limit=10K \
-            --log=aria2.log \
-            -l aria2.log
+            -l -
+
+          echo "=== aria2 log ==="
+          cat aria2.log 2>/dev/null || echo "(no log file - log went to stdout via -l -)"
 
       - name: Check downloaded file
         run: |
           ls -lh "${{ inputs.download_name }}.zip" 2>/dev/null || echo "File not found"
           file "${{ inputs.download_name }}.zip" 2>/dev/null || echo "Unknown file type"
-          cat aria2.log | tail -30
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
