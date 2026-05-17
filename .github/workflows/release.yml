@@ -24,11 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install aria2
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y aria2
-
       - name: Download files
         run: |
           mkdir -p downloads
@@ -40,14 +35,24 @@ jobs:
             filename=$(echo "$url" | md5sum | cut -d' ' -f1)
             filename="usgs_data_${filename}.zip"
 
-            aria2c "$url" \
-              --out="downloads/$filename" \
-              --split=4 \
-              --max-connection-per-server=4 \
-              --max-download-limit=2M \
-              --connect-timeout=30 \
-              --timeout=3600 \
-              --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            curl -L \
+              -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+              -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8" \
+              -H "Accept-Language: en-US,en;q=0.5" \
+              -H "Accept-Encoding: gzip, deflate, br" \
+              -H "Connection: keep-alive" \
+              -H "Upgrade-Insecure-Requests: 1" \
+              -H "Sec-Fetch-Dest: document" \
+              -H "Sec-Fetch-Mode: navigate" \
+              -H "Sec-Fetch-Site: none" \
+              -H "Sec-Fetch-User: ?1" \
+              -H "Cache-Control: max-age=0" \
+              --keepalive-time 60 \
+              --connect-timeout 30 \
+              --max-time 3600 \
+              --limit-rate 2M \
+              -o "downloads/$filename" \
+              "$url"
 
             echo "Downloaded: $filename ($(du -sh downloads/$filename | cut -f1))"
           done <<< "${{ env.URLS }}"

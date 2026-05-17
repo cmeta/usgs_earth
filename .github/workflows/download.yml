@@ -20,24 +20,28 @@ jobs:
   download:
     runs-on: ubuntu-latest
     steps:
-      - name: Install aria2
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y aria2
-
       - name: Download USGS data
         run: |
           echo "Downloading: ${{ inputs.usgs_url }}"
-          echo "Using aria2 with 4 threads, max 2M/s"
 
-          aria2c "${{ inputs.usgs_url }}" \
-            --out="${{ inputs.download_name }}.zip" \
-            --split=4 \
-            --max-connection-per-server=4 \
-            --max-download-limit=2M \
-            --connect-timeout=30 \
-            --timeout=3600 \
-            --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          curl -L \
+            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+            -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8" \
+            -H "Accept-Language: en-US,en;q=0.5" \
+            -H "Accept-Encoding: gzip, deflate, br" \
+            -H "Connection: keep-alive" \
+            -H "Upgrade-Insecure-Requests: 1" \
+            -H "Sec-Fetch-Dest: document" \
+            -H "Sec-Fetch-Mode: navigate" \
+            -H "Sec-Fetch-Site: none" \
+            -H "Sec-Fetch-User: ?1" \
+            -H "Cache-Control: max-age=0" \
+            --keepalive-time 60 \
+            --connect-timeout 30 \
+            --max-time 3600 \
+            --limit-rate 2M \
+            -o "${{ inputs.download_name }}.zip" \
+            "${{ inputs.usgs_url }}"
 
       - name: Check downloaded file
         run: |
