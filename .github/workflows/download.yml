@@ -28,16 +28,15 @@ jobs:
       - name: Download USGS data
         run: |
           echo "Downloading: ${{ inputs.usgs_url }}"
-          echo "Using aria2 with single connection to avoid rate limit"
+          echo "Using aria2 with 4 threads, max 2M/s"
 
           aria2c "${{ inputs.usgs_url }}" \
             --out="${{ inputs.download_name }}.zip" \
+            --split=4 \
+            --max-connection-per-server=4 \
+            --max-download-limit=2M \
             --connect-timeout=30 \
             --timeout=3600 \
-            --max-limit=2048K \
-            --max-concurrent-downloads=4 \
-            --split=4 \
-            --enable-split=true \
             --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
       - name: Check downloaded file
