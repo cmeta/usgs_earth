@@ -25,7 +25,7 @@ jobs:
           echo "Downloading: ${{ inputs.usgs_url }}"
           echo "Rate limit: limiting to 1 connection to avoid USGS IP rate-limit"
 
-          curl -L -o "${{ inputs.download_name }}.zip" \
+          curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -o "${{ inputs.download_name }}.zip" \
             "${{ inputs.usgs_url }}" \
             --progress-bar \
             --connect-timeout 30 \

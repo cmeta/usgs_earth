@@ -48,7 +48,7 @@ jobs:
             filename=$(echo "$url" | md5sum | cut -d' ' -f1)
             filename="usgs_data_${filename}.zip"
 
-            curl -L -o "downloads/$filename" "$url" \
+            curl -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -o "downloads/$filename" "$url" \
               --progress-bar \
               --connect-timeout 30 \
               --max-time 3600 \
