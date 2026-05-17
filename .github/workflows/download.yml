@@ -1,0 +1,40 @@
+name: Download USGS Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      usgs_url:
+        description: 'USGS download URL'
+        required: true
+        type: string
+      download_name:
+        description: 'Name for this download (for artifact naming)'
+        required: false
+        type: string
+        default: 'usgs_data'
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download USGS data
+        run: |
+          echo "Downloading: ${{ inputs.usgs_url }}"
+          curl -L -o "${{ inputs.download_name }}.zip" \
+            "${{ inputs.usgs_url }}" \
+            --progress-bar \
+            --connect-timeout 30 \
+            --max-time 600
+
+      - name: Check downloaded file
+        run: |
+          ls -lh "${{ inputs.download_name }}.zip"
+          echo "---"
+          file "${{ inputs.download_name }}.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.download_name }}
+          path: ${{ inputs.download_name }}.zip
+          retention-days: 5

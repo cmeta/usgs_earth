@@ -1,0 +1,76 @@
+name: Download and Release USGS Data
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      skip_download:
+        description: 'Skip download step (just test release)'
+        required: false
+        type: boolean
+        default: 'false'
+
+env:
+  # Configure your download URLs here
+  URLS: |
+    https://dds.cr.usgs.gov/download-staging/eyJpZCI6OTc3NTc2NTM1LCJjb250YWN0SWQiOjI2MjM2MjEyfQ==
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || inputs.skip_download != 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse URLs
+        id: parse
+        run: |
+          echo "urls<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ env.URLS }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "release_tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+
+      - name: Download files
+        run: |
+          mkdir -p downloads
+
+          # Split by newline and download each URL
+          while IFS= read -r url; do
+            [ -z "$url" ] && continue
+            echo "Downloading: $url"
+
+            # Extract filename from URL or generate one
+            filename=$(echo "$url" | md5sum | cut -d' ' -f1)
+            filename="usgs_data_${filename}.zip"
+
+            curl -L -o "downloads/$filename" "$url" \
+              --progress-bar \
+              --connect-timeout 30 \
+              --max-time 3600
+
+            echo "Downloaded: $filename ($(du -sh downloads/$filename | cut -f1))"
+          done <<< "${{ env.URLS }}"
+
+      - name: List downloads
+        run: |
+          echo "=== Downloaded files ==="
+          ls -lh downloads/
+
+      - name: Create release archive
+        run: |
+          cd downloads
+          zip -r ../usgs_data.zip .
+          cd ..
+
+          echo "=== Archive contents ==="
+          unzip -l usgs_data.zip | head -20
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: usgs_data.zip
+          tag_name: ${{ github.event.release.tag_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
