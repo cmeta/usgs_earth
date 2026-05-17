@@ -53,7 +53,7 @@ jobs:
               --connect-timeout 30 \
               --max-time 3600 \
               --max-redirs 5 \
-              --limit-rate 1M
+              --limit-rate 512K
 
             echo "Downloaded: $filename ($(du -sh downloads/$filename | cut -f1))"
           done <<< "${{ env.URLS }}"

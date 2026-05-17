@@ -31,7 +31,7 @@ jobs:
             --connect-timeout 30 \
             --max-time 3600 \
             --max-redirs 5 \
-            --limit-rate 1M
+            --limit-rate 512K
 
       - name: Check downloaded file
         run: |
