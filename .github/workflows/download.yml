@@ -34,7 +34,7 @@ jobs:
             --out="${{ inputs.download_name }}.zip" \
             --connect-timeout=30 \
             --timeout=3600 \
-            --max-limit=2M \
+            --max-limit=2048K \
             --max-concurrent-downloads=4 \
             --split=4 \
             --enable-split=true \
